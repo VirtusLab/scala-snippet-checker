@@ -245,6 +245,10 @@ function run() {
             yield core.group('Search snippets', () => __awaiter(this, void 0, void 0, function* () {
                 snippets = getSnippet(ghContext);
             }));
+            if (snippets.length === 0) {
+                core.debug("Not found snippets in a comment.");
+                return;
+            }
             let bodyComment = '';
             bodyComment += generateCommentHeader(ghContext);
             if (snippets.length !== 0) {

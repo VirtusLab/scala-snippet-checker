@@ -260,6 +260,11 @@ async function run(): Promise<void> {
       snippets = getSnippet(ghContext)
     })
 
+    if(snippets.length === 0) {
+      core.debug("Not found snippets in a comment.")
+      return 
+    }
+
     let bodyComment = ''
     bodyComment += generateCommentHeader(ghContext)
 
