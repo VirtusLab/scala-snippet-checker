@@ -1,13 +1,13 @@
-# Scala Snippet Runner
-A Github Actions to run Scala Script snippet code in issues.
+# Scala Snippet Checker
+A Github Action to run Scala Script snippet code in issues.
 
-It detects scala code in issues and comments. Each snippet must be annotated with `scala-cli` syntax after backtick.
+It detects scala code in issues and comments. Each snippet must be annotated with `scala-cli` after backtick.
 
 In the background, it uses [ScalaCLI](https://scala-cli.virtuslab.org) to run Scala code. 
 
 ## Annotate snippet of code
 
-There is exists a few ways to annotate snippet of code to run:
+There are a few ways to annotate snippet of code to run:
 
 - \`\`\``scala-cli` 
 - \`\`\``scala-cli` args
@@ -15,7 +15,7 @@ There is exists a few ways to annotate snippet of code to run:
 - \`\`\`scala ... `scala-cli`
 - \`\`\`scala ... `scala-cli` args
 
-`scala-cli` keyword must be added to the end of header of snipper To pass arguments to ScalaCLI, add them after `scala-cli`.
+`scala-cli` keyword must be added to the end of header of a snippet. To pass arguments to ScalaCLI, add them after `scala-cli`.
 
 ## Usage:
 
@@ -33,9 +33,9 @@ jobs:
      timeout-minutes: 2
      runs-on: "ubuntu-latest"
      steps:
-     - uses: lwronski/scala-snippet-runner@main
+     - uses: virtuslab/scala-snippet-checker@main
 ```
-It is recommended to specify a low execution time. 
+It is recommended to specify a low execution time in `timeout minutes`.
 
 ## Examples
 

@@ -1,5 +1,5 @@
 name: 'Scala Snippet Checker'
-description: 'Run Scala code from snippet in issues'
+description: 'Run Scala code from snippets found in Github Issues'
 inputs:
   token:
     description: 'GITHUB_TOKEN'
