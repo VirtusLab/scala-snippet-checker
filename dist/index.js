@@ -222,7 +222,22 @@ function getSnippet(ghContext) {
     while (match != null) {
         const mdSnippet = match[0];
         const code = match[3];
-        const scalaCliOptions = match[2].trim().split(/[ ,]+/).concat(['-q', '-']);
+        let scalaCliOptions = match[2].trim().split(/[ ,]+/);
+        if (scalaCliOptions[scalaCliOptions.length - 1] === 'nightly-checker') {
+            scalaCliOptions.pop();
+            scalaCliOptions = scalaCliOptions
+                .concat([
+                '-q',
+                'https://raw.githubusercontent.com/VirtusLab/scala-snippet-checker/main/src/NightlyChecker.scala',
+                '--',
+                '--nightly-checker-code',
+                code
+            ])
+                .concat(scalaCliOptions);
+        }
+        else {
+            scalaCliOptions = scalaCliOptions.concat(['-q', '-']);
+        }
         snippets.push({
             mdSnippet,
             code,
