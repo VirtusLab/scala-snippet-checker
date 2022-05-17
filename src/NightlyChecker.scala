@@ -33,7 +33,7 @@ object NightlyChecker extends CaseApp[Options] {
       Map.empty
     )
 
-    val scala3nigthlies: List[String] = cache
+    val scala3Versions = cache
       .withTtl(0.seconds)
       .logger
       .use {
@@ -44,26 +44,83 @@ object NightlyChecker extends CaseApp[Options] {
       }
       .versions
       .available
-      .filter(_.endsWith("-NIGHTLY"))
       .sorted
+
+    val code = options.nightlyCheckerCode
+    val scala3stable = scala3Versions
+      .filterNot(_.endsWith("-NIGHTLY"))
+      .filterNot(_.contains("RC"))
       .reverse
 
-    for { nightly <- scala3nigthlies } {
-      val res = os
-        .proc("scala-cli", "-S", nightly, "-q", "-")
-        .call(
-          cwd = os.pwd,
-          stdin = options.nightlyCheckerCode,
-          check = false,
-          mergeErrIntoOut = true
-        )
-      val output = res.out.text().trim
-      if (res.exitCode == 0) {
-        println(
-          s"Found the latest nightly version working with the snippet code: $nightly"
-        )
+    val (latestNotWorkingStable, latestWorkingStableOpt) =
+      searchLatestStableWorkingVersion(code, scala3stable)
+
+    val scala3nigthlies =
+      latestWorkingStableOpt match {
+        case Some(latestWorkingStable) =>
+          scala3Versions
+            .filter(_.endsWith("-NIGHTLY"))
+            .filter(_.startsWith(latestWorkingStable))
+        case None =>
+          scala3Versions
+            .filter(_.endsWith("-NIGHTLY"))
+            .dropWhile(!_.startsWith(latestNotWorkingStable))
+      }
+
+    val latestWorkingNightly =
+      searchNigthlyStableWorkingVersion(code, scala3nigthlies)
+        .getOrElse {
+          println("Not found nightly scala version working with input code")
+          sys.exit(0)
+        }
+
+    println(
+      s"Found the latest nightly version working with the snippet code: $latestWorkingNightly"
+    )
+  }
+
+  private def searchNigthlyStableWorkingVersion(
+      code: String,
+      scala3Versions: List[String]
+  ): Option[String] = {
+    val halfIndex = Math.ceil((scala3Versions.length) / 2).toInt
+    if (scala3Versions.length == 1) Some(scala3Versions.head)
+    else if (isCorrectScalaVersion(scala3Versions(halfIndex), code)) {
+      searchNigthlyStableWorkingVersion(code, scala3Versions.drop(halfIndex))
+    } else
+      searchNigthlyStableWorkingVersion(code, scala3Versions.take(halfIndex))
+  }
+
+  private def searchLatestStableWorkingVersion(
+      code: String,
+      scala3Versions: List[String]
+  ): (String, Option[String]) = {
+    val (stableVersion, stableIndexVersionIndex) = scala3Versions.zipWithIndex
+      .collectFirst {
+        case (stable, index) if isCorrectScalaVersion(stable, code) =>
+          (stable, index - 1)
+      }
+      .getOrElse {
+        println("Not found stable scala version working with input code")
         sys.exit(0)
       }
-    }
+
+    val stableIndexVersion =
+      if (stableIndexVersionIndex < 0) None
+      else Some(scala3Versions(stableIndexVersionIndex))
+    (stableVersion, stableIndexVersion)
+  }
+
+  private def isCorrectScalaVersion(version: String, code: String): Boolean = {
+    val res = os
+      .proc("scala-cli", "compile", "-S", version, "-")
+      .call(
+        cwd = os.pwd,
+        stdin = code,
+        check = false,
+        mergeErrIntoOut = true
+      )
+    val output = res.out.text().trim
+    res.exitCode == 0
   }
 }
